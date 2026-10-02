@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Personal Neovim config built on LazyVim and lazy.nvim. This directory is not a git repo,
-so there is no undo: back up a file before making risky edits.
+Personal Neovim config built on LazyVim and lazy.nvim. It is a local git repo (`master`,
+no remote). Don't commit unless the user asks.
 
 ## Layout and load order
 
@@ -20,6 +20,9 @@ so there is no undo: back up a file before making risky edits.
 - LazyVim extras are enabled by `{ import = "lazyvim.plugins.extras..." }` lines in
   `lua/config/lazy.lua`. Don't use `:LazyExtras` or `lazyvim.json` (its `extras` list is
   intentionally empty).
+- The picker is snacks.picker. `vim.g.lazyvim_picker` is `auto`, and it picks snacks
+  because the `editor.telescope` extra is not imported. Don't re-add that extra: it
+  disables snacks.picker, which opencode.nvim's `select()` uses.
 - Completion uses nvim-cmp, not blink, because `options.lua` sets
   `vim.g.lazyvim_cmp = "nvim-cmp"`. The real `<Tab>` chain lives in
   `lua/plugins/cmp.lua`: snippet_forward, then confirm, then ai_nes, then ai_accept.
@@ -39,15 +42,23 @@ so there is no undo: back up a file before making risky edits.
 - The `defaults` block in `lazy.lua` sets `lazy = false` and `version = false`, so custom
   plugins load at startup and track the latest commit. `lazy-lock.json` holds the real
   pins. Don't run `:Lazy update` or `:Lazy sync` unless asked, since they rewrite it.
+  To update one plugin: `nvim --headless "+Lazy! update <name>" +qa`.
 - SQL support pairs the `sqls` LSP with vim-dadbod through `nanotee/sqls.nvim`, wired via
   `on_attach` in `lua/plugins/sql.lua`. conform has no SQL formatter configured on purpose.
 - `<C-h/j/k/l>` belong to vim-tmux-navigator. Use `<C-w>h/j/k/l` for window-only moves.
-- OpenCode integration is `nickjvandyke/opencode.nvim` (`lua/plugins/opencode.lua`), and its
-  keymaps live in `keymaps.lua`: `<leader>oa`, `<leader>os`, `go`/`goo`, `<S-C-u>`, and
-  `<S-C-d>`. It also sets `autoread`, so buffers reload when an agent edits files.
+  The tmux prefix is `<C-Space>`.
+- OpenCode integration is `nickjvandyke/opencode.nvim` on `main` (OpenCode v2 API; the
+  installed `opencode` CLI is v2). `lua/plugins/opencode.lua` follows the README's lazy.nvim
+  setup: empty `vim.g.opencode_opts` and keymaps `<C-a>` (ask), `<C-x>` (select), and
+  `go`/`goo` (operator). `<C-a>`/`<C-x>` intentionally replace Vim's number
+  increment/decrement. The plugin sets `autoread` itself, so buffers reload on agent edits.
+  Don't pin `version = "*"`: stable releases only support OpenCode v1.
 
 ## Verifying changes
 
 - Check that the config loads without errors: `nvim --headless "+qa"`. Any error output
   means a spec failed to load.
-- Look at plugin state with `:Lazy` and LSP and tool health with `:checkhealth`.
+- Check a keymap: `nvim --headless "+lua print(vim.fn.maparg('<C-a>', 'n', false, true).desc)" +qa`.
+- Check the active picker: `nvim --headless "+lua print(LazyVim.pick.picker.name)" +qa`.
+- Look at plugin state with `:Lazy` and LSP and tool health with `:checkhealth`
+  (`:checkhealth opencode` for the OpenCode plugin).
